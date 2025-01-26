@@ -1,10 +1,10 @@
-;;; magit-p4.el --- git-p4 plug-in for Magit
+;;; magit-p4.el --- git-p4 plug-in for Magit  -*- lexical-binding:t; coding:utf-8 -*-
 
 ;; Copyright (C) 2014 Damian T. Dobroczyński
 ;;
 ;; Author: Damian T. Dobroczyński <qoocku@gmail.com>
 ;; Maintainer: Aleksey Fedotov <lexa@cfotr.com>
-;; Package-Requires: ((emacs "25.1") (magit "2.1") (magit-popup "2.1") (p4 "12.0") (cl-lib "0.5"))
+;; Package-Requires: ((emacs "25.1") (magit "2.1") (transient "0.4.3") (p4 "12.0") (cl-lib "0.5"))
 ;; Keywords: vc tools
 ;; URL: https://github.com/qoocku/magit-p4
 ;; Package: magit-p4
@@ -30,11 +30,11 @@
 ;;; Code:
 
 (require 'magit)
+(require 'p4)
 
 (eval-when-compile
   (require 'cl-lib)
   (require 'find-lisp)
-  (require 'p4)
   (require 'subr-x))
 
 (declare-function find-lisp-find-files-internal 'find-lisp)
@@ -57,12 +57,12 @@ argument is directory which will hold the Git repository."
    (append (list (p4-read-arg-string "Depot path: " "//" 'filespec))
            (if (and (not (cl-some (lambda (arg)
                                     (string-match-p "--destination=" arg))
-                                  (magit-p4-clone-arguments)))
+                                  (transient-args (oref transient-current-prefix command))))
                     current-prefix-arg)
              (read-directory-name "Target directory: ")
              nil)))
   (magit-run-git-async "p4" "clone"
-                       (cons depot-path (magit-p4-clone-arguments))))
+                       (cons depot-path (transient-args (oref transient-current-prefix command)))))
 
 
 ;;;###autoload
@@ -77,8 +77,8 @@ depot path which has been cloned to before."
      (list (p4-read-arg-string "With (another) depot path: " "//" 'filespec))))
   (magit-run-git-async "p4" "sync"
                        (cond (depot-path
-                              (cons depot-path (magit-p4-sync-arguments)))
-                             (t (magit-p4-sync-arguments)))))
+                              (cons depot-path (transient-args (oref transient-current-prefix command))))
+                             (t (transient-args (oref transient-current-prefix command))))))
 
 ;;;###autoload
 (defun magit-p4-rebase ()
@@ -90,7 +90,7 @@ depot path which has been cloned to before."
 (defun magit-p4-submit ()
   "Run git-p4 submit."
   (interactive)
-  (magit-p4-run-git-with-editor "p4" "submit" (magit-p4-submit-arguments)))
+  (magit-p4-run-git-with-editor "p4" "submit" (transient-args (oref transient-current-prefix command))))
 
 (defcustom magit-p4-process-yes-or-no-prompt-regexp
   "\\[\\(y\\)\\]es, \\[\\(n\\)\\]o"
@@ -138,6 +138,10 @@ depot path which has been cloned to before."
     (magit-p4-process-yes-or-no-prompt process string)
     (magit-p4-process-skip-or-quit process string)))
 
+(defun magit-p4--make-reader (function)
+  (lambda (prompt initial-input _history)
+    (funcall function prompt initial-input)))
+
 ;;;###autoload
 (defun magit-p4-run-git-with-editor (&rest args)
   "Run git with P4EDITOR set and `magit-p4-process-filter'.
@@ -176,59 +180,63 @@ P4EDITOR and use custom process filter `magit-p4-process-filter'."
   :man-page "git-p4"
   ["Actions"
    ("c" "Clone" magit-p4-clone-popup)
-   ("s" "Sync" magit-p4-sync-popup)
+   ("f" "Sync" magit-p4-sync-popup)
    ("r" "Rebase" magit-p4-rebase)
-   ("S" "Submit" magit-p4-submit-popup)])
+   ("P" "Submit" magit-p4-submit-popup)])
+
+(defvar magit-p4-sync-clone-shared-arguments
+  '(("-b" "Branch" "--branch=")
+    ("-c" "Changes files" "--changesfile=" :reader transient-read-existing-file)
+    ("-m" "Limit the number of imported changes" "--max-changes=")
+    ("-s" "Internal block size to use when iteratively calling p4 changes"
+        "--changes-block-size=")
+    ("-/" "Exclude depot path" "-/")))
 
 (defvar magit-p4-sync-clone-shared-options
-  '(("b" "Branch" "--branch=")
-    ("c" "Changes files" "--changesfile=" read-file-name)
-    ("m" "Limit the number of imported changes" "--max-changes=")
-    ("s" "Internal block size to use when iteratively calling p4 changes"
-        "--changes-block-size=")
-    ("/" "Exclude depot path" "-/")))
-
-(defvar magit-p4-sync-clone-shared-switches
-  '(("d" "Detect branches" "--detect-branches")
-    ("l" "Query p4 for labels" "--detect-labels")
-    ("b" "Import labels" "--import-labels")
-    ("i" "Import into refs/heads/ , not refs/remotes" "--import-local")
-    ("p" "Keep entire BRANCH/DIR/SUBDIR prefix during import" "--keep-path")
-    ("s" "Only sync files that are included in the p4 Client Spec"
+  '(("-d" "Detect branches" "--detect-branches")
+    ("-l" "Query p4 for labels" "--detect-labels")
+    ("-b" "Import labels" "--import-labels")
+    ("-i" "Import into refs/heads/ , not refs/remotes" "--import-local")
+    ("-p" "Keep entire BRANCH/DIR/SUBDIR prefix during import" "--keep-path")
+    ("-s" "Only sync files that are included in the p4 Client Spec"
         "--use-client-spec")))
 
 (transient-define-prefix magit-p4-sync-popup ()
   "Pull changes from p4"
+  [:description "Options"
+   :class transient-column
+   :setup-children
+   (lambda (_)
+     (transient-parse-suffixes 'magit-p4-sync-popup magit-p4-sync-clone-shared-options))]
   [:description "Arguments"
    :class transient-column
    :setup-children
    (lambda (_)
-     (transient-parse-suffixes 'magit-p4-sync-popup
-      (append magit-p4-sync-clone-shared-options magit-p4-sync-clone-shared-switches)))
+     (transient-parse-suffixes 'magit-p4-sync-popup magit-p4-sync-clone-shared-arguments))
    ]
   ["Actions"
-   ("s" "Sync" magit-p4-sync)])
+   ("p" "Sync" magit-p4-sync)])
 
 (transient-define-prefix magit-p4-submit-popup ()
   "Submit changes from git to p4"
+  ["Options"
+   ("-M" "Detect renames" "-M")
+   ("-v" "Be more verbose" "--verbose")
+   ("-u" "Preserve user" "--preserve-user")
+   ("-l" "Export labels" "--export-labels")
+   ("-n" "Dry run" "--dry-run")
+   ("-p" "Prepare P4 only" "--prepare-p4-only")]
+  
   ["Arguments"
-   ("M" "Detect renames" "-M")
-   ("v" "Be more verbose" "--verbose")
-   ("u" "Preserve user" "--preserve-user")
-   ("l" "Export labels" "--export-labels")
-   ("n" "Dry run" "--dry-run")
-   ("p" "Prepare P4 only" "--prepare-p4-only")
-   ("o" "Origin" "--origin=" magit-read-branch-or-commit)
-   ("b" "Sync with branch after submission"
+   ("-o" "Origin" "--origin=" :reader ,(magit-p4--make-reader 'magit-read-branch-or-commit))
+   ("-b" "Sync with branch after submission"
     "--branch=" magit-read-branch)
-   ("N" "Name of git branch to submit"
-    " " magit-read-branch-or-commit)
-   ("c" "Conflict resolution (ask|skip|quit)" "--conflict="
-    (lambda (prompt &optional default)
-      (magit-completing-read prompt '("ask" "skip" "quit")
-                             nil nil nil nil default)))]
+   ("-N" "Name of git branch to submit"
+    " " :reader ,(magit-p4--make-reader 'magit-p4-read-branch-or-commit))
+   ("-c" "Conflict resolution (ask|skip|quit)" "--conflict="
+    :choices ("ask" "skip" "quit"))]
   ["Submit"
-   ("s" "Submit all" magit-p4-submit)])
+   ("p" "Submit all" magit-p4-submit)])
 
 (transient-define-prefix magit-p4-clone-popup ()
   "Clone repository from p4"
@@ -236,15 +244,15 @@ P4EDITOR and use custom process filter `magit-p4-process-filter'."
    :setup-children
    (lambda (children)
      (append children
-             (transient-parse-suffixes 'magit-p4-clone-popup magit-p4-sync-clone-shared-switches)))
-   ("b" "Bare clone" "--bare")
+             (transient-parse-suffixes 'magit-p4-clone-popup magit-p4-sync-clone-shared-options)))
+   ("-b" "Bare clone" "--bare")
    ]
   ["Arguments"
    :setup-children
    (lambda (children)
      (append children
-             (transient-parse-suffixes 'magit-p4-clone-popup magit-p4-sync-clone-shared-options)))
-   ("D" "Destination directory" "--destination=" read-directory-name)]
+             (transient-parse-suffixes 'magit-p4-clone-popup magit-p4-sync-clone-shared-arguments)))
+   ("-D" "Destination directory" "--destination=" read-directory-name)]
   ["Actions"
    ("c" "Clone" magit-p4-clone)])
 
