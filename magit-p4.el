@@ -57,13 +57,12 @@ argument is directory which will hold the Git repository."
    (append (list (p4-read-arg-string "Depot path: " "//" 'filespec))
            (if (and (not (cl-some (lambda (arg)
                                     (string-match-p "--destination=" arg))
-                                  (transient-args (oref transient-current-prefix command))))
+                                  (transient-args #'magit-p4-clone-popup)))
                     current-prefix-arg)
              (read-directory-name "Target directory: ")
              nil)))
   (magit-run-git-async "p4" "clone"
-                       (cons depot-path
-                             (transient-args (oref transient-current-prefix command)))
+                       (cons depot-path (transient-args #'magit-p4-clone-popup))
                        target-dir))
 
 ;;;###autoload
@@ -78,8 +77,8 @@ depot path which has been cloned to before."
      (list (p4-read-arg-string "With (another) depot path: " "//" 'filespec))))
   (magit-run-git-async "p4" "sync"
                        (cond (depot-path
-                              (cons depot-path (transient-args (oref transient-current-prefix command))))
-                             (t (transient-args (oref transient-current-prefix command))))))
+                              (cons depot-path (transient-args #'magit-p4-sync-popup)))
+                             (t (transient-args #'magit-p4-sync-popup)))))
 
 ;;;###autoload
 (defun magit-p4-rebase ()
@@ -91,7 +90,7 @@ depot path which has been cloned to before."
 (defun magit-p4-submit ()
   "Run git-p4 submit."
   (interactive)
-  (magit-p4-run-git-with-editor "p4" "submit" (transient-args (oref transient-current-prefix command))))
+  (magit-p4-run-git-with-editor "p4" "submit" (transient-args #'magit-p4-submit-popup)))
 
 (defcustom magit-p4-process-yes-or-no-prompt-regexp
   "\\[\\(y\\)\\]es, \\[\\(n\\)\\]o"
@@ -198,7 +197,7 @@ P4EDITOR and use custom process filter `magit-p4-process-filter'."
     ("-c" "Changes files" "--changesfile=" :reader transient-read-existing-file)
     ("-m" "Limit the number of imported changes" "--max-changes=")
     ("-s" "Internal block size to use when iteratively calling p4 changes"
-        "--changes-block-size=")
+     "--changes-block-size=")
     ("-/" "Exclude depot path" "-/")))
 
 (defvar magit-p4-sync-clone-shared-options
@@ -208,21 +207,14 @@ P4EDITOR and use custom process filter `magit-p4-process-filter'."
     ("-i" "Import into refs/heads/ , not refs/remotes" "--import-local")
     ("-p" "Keep entire BRANCH/DIR/SUBDIR prefix during import" "--keep-path")
     ("-s" "Only sync files that are included in the p4 Client Spec"
-        "--use-client-spec")))
+     "--use-client-spec")))
 
 (transient-define-prefix magit-p4-sync-popup ()
   "Pull changes from p4"
-  [:description "Options"
-   :class transient-column
-   :setup-children
-   (lambda (_)
-     (transient-parse-suffixes 'magit-p4-sync-popup magit-p4-sync-clone-shared-options))]
-  [:description "Arguments"
-   :class transient-column
-   :setup-children
-   (lambda (_)
-     (transient-parse-suffixes 'magit-p4-sync-popup magit-p4-sync-clone-shared-arguments))
-   ]
+  ["Options"
+   magit-p4-sync-clone-shared-options]
+  ["Arguments"
+   magit-p4-sync-clone-shared-arguments]
   ["Actions"
    ("p" "Sync" magit-p4-sync)])
 
@@ -250,17 +242,10 @@ P4EDITOR and use custom process filter `magit-p4-process-filter'."
 (transient-define-prefix magit-p4-clone-popup ()
   "Clone repository from p4"
   ["Options"
-   :setup-children
-   (lambda (children)
-     (append children
-             (transient-parse-suffixes 'magit-p4-clone-popup magit-p4-sync-clone-shared-options)))
-   ("-b" "Bare clone" "--bare")
-   ]
+   magit-p4-sync-clone-shared-options
+   ("-b" "Bare clone" "--bare")]
   ["Arguments"
-   :setup-children
-   (lambda (children)
-     (append children
-             (transient-parse-suffixes 'magit-p4-clone-popup magit-p4-sync-clone-shared-arguments)))
+   magit-p4-sync-clone-shared-arguments
    ("-D" "Destination directory" "--destination=" read-directory-name)]
   ["Actions"
    ("c" "Clone" magit-p4-clone)])
