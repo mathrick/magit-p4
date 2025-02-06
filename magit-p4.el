@@ -37,7 +37,8 @@
 (eval-when-compile (require 'find-lisp))
 (eval-when-compile (require 'subr-x))
 
-(declare-function find-lisp-find-files-internal 'find-lisp)
+(declare-function find-lisp-find-files-internal "find-lisp"
+                  (directory file-predicate directory-predicate))
 
 ;;; Options
 
