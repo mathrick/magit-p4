@@ -237,10 +237,10 @@ P4EDITOR and use custom process filter `magit-p4-process-filter'."
 (defun magit-p4/insert-job (&optional job)
   "Insert JOB reference in a buffer.
 
-The insertion assumes that it should be 'Jobs:' entry in the
+The insertion assumes that it should be `Jobs:' entry in the
 buffer.  If not - it inserts such at the current point of the
 buffer.  Then it asks (if applied interactively) for a job id
-using `p4` completion function.  Finally it inserts the id under
+using `p4' completion function.  Finally it inserts the id under
 `Jobs:' entry."
   (interactive
    (list (p4-read-arg-string "Job: " "" 'job)))
