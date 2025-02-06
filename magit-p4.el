@@ -31,12 +31,11 @@
 
 (require 'magit)
 (require 'magit-popup)
+(require 'p4)
 
-(eval-when-compile
-  (require 'cl-lib)
-  (require 'find-lisp)
-  (require 'p4)
-  (require 'subr-x))
+(eval-when-compile (require 'cl-lib))
+(eval-when-compile (require 'find-lisp))
+(eval-when-compile (require 'subr-x))
 
 (declare-function find-lisp-find-files-internal 'find-lisp)
 
