@@ -4,7 +4,7 @@
 ;;
 ;; Author: Damian T. Dobroczyński <qoocku@gmail.com>
 ;; Maintainer: Aleksey Fedotov <lexa@cfotr.com>
-;; Package-Requires: ((emacs "25.1") (magit "2.1") (magit-popup "2.1") (p4 "12.0") (cl-lib "0.5"))
+;; Package-Requires: ((emacs "25.1") (magit "4.3.0") (magit-popup "2.1") (p4 "12.0") (cl-lib "0.5"))
 ;; Keywords: vc tools
 ;; URL: https://github.com/qoocku/magit-p4
 ;; Package: magit-p4
@@ -100,6 +100,14 @@ depot path which has been cloned to before."
   :group 'magit-p4
   :type 'regexp)
 
+(defmacro magit-p4-process-kill-on-abort (process &rest body)
+  ;; This is a copy of the obsolete `magit-process-kill-on-abort'.
+  (declare (indent 1)
+           (debug (form body)))
+  `(let ((minibuffer-local-map
+          (magit-process-make-keymap ,process minibuffer-local-map)))
+     ,@body))
+
 (defun magit-p4-process-yes-or-no-prompt (process string)
   (let ((max-mini-window-height 30)
         (beg (string-match magit-p4-process-yes-or-no-prompt-regexp string)))
@@ -110,7 +118,7 @@ depot path which has been cloned to before."
         (concat
          (match-string
           (if (save-match-data
-                (magit-process-kill-on-abort process
+                (magit-p4-process-kill-on-abort process
                   (yes-or-no-p (substring string 0 beg)))) 1 2)
           string)
          "\n"))))))
@@ -129,7 +137,7 @@ depot path which has been cloned to before."
      process
      (concat
       (substring
-       (magit-process-kill-on-abort process
+       (magit-p4-process-kill-on-abort process
          (magit-completing-read prompt '("skip" "quit") nil t))
        0 1)
       "\n"))))
