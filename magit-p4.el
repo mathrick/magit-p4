@@ -192,22 +192,24 @@ P4EDITOR and use custom process filter `magit-p4-process-filter'."
    ("r" "Rebase" magit-p4-rebase)
    ("P" "Submit" magit-p4-submit-popup)])
 
-(defvar magit-p4-sync-clone-shared-arguments
-  '(("-b" "Branch" "--branch=")
-    ("-c" "Changes files" "--changesfile=" :reader transient-read-existing-file)
-    ("-m" "Limit the number of imported changes" "--max-changes=")
-    ("-s" "Internal block size to use when iteratively calling p4 changes"
-     "--changes-block-size=")
-    ("-/" "Exclude depot path" "-/")))
+(eval-and-compile ;magit-p4-sync-clone-shared-arguments
+  (defvar magit-p4-sync-clone-shared-arguments
+    '(("-b" "Branch" "--branch=")
+      ("-c" "Changes files" "--changesfile=" :reader transient-read-existing-file)
+      ("-m" "Limit the number of imported changes" "--max-changes=")
+      ("-s" "Internal block size to use when iteratively calling p4 changes"
+       "--changes-block-size=")
+      ("-/" "Exclude depot path" "-/"))))
 
-(defvar magit-p4-sync-clone-shared-options
-  '(("-d" "Detect branches" "--detect-branches")
-    ("-l" "Query p4 for labels" "--detect-labels")
-    ("-b" "Import labels" "--import-labels")
-    ("-i" "Import into refs/heads/ , not refs/remotes" "--import-local")
-    ("-p" "Keep entire BRANCH/DIR/SUBDIR prefix during import" "--keep-path")
-    ("-s" "Only sync files that are included in the p4 Client Spec"
-     "--use-client-spec")))
+(eval-and-compile ;magit-p4-sync-clone-shared-options
+  (defvar magit-p4-sync-clone-shared-options
+    '(("-d" "Detect branches" "--detect-branches")
+      ("-l" "Query p4 for labels" "--detect-labels")
+      ("-b" "Import labels" "--import-labels")
+      ("-i" "Import into refs/heads/ , not refs/remotes" "--import-local")
+      ("-p" "Keep entire BRANCH/DIR/SUBDIR prefix during import" "--keep-path")
+      ("-s" "Only sync files that are included in the p4 Client Spec"
+       "--use-client-spec"))))
 
 (transient-define-prefix magit-p4-sync-popup ()
   "Pull changes from p4"
