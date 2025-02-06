@@ -30,6 +30,7 @@
 ;;; Code:
 
 (require 'magit)
+(require 'magit-popup)
 
 (eval-when-compile
   (require 'cl-lib)
