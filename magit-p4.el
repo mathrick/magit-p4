@@ -1,4 +1,4 @@
-;;; magit-p4.el --- git-p4 plug-in for Magit
+;;; magit-p4.el --- git-p4 plug-in for Magit  -*- lexical-binding:nil -*-
 
 ;; Copyright (C) 2014 Damian T. Dobroczyński
 ;;
