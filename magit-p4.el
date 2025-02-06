@@ -1,4 +1,4 @@
-;;; magit-p4.el --- git-p4 plug-in for Magit  -*- lexical-binding:nil -*-
+;;; magit-p4.el --- git-p4 plug-in for Magit  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2014 Damian T. Dobroczyński
 ;;
@@ -63,7 +63,8 @@ argument is directory which will hold the Git repository."
              (read-directory-name "Target directory: ")
              nil)))
   (magit-run-git-async "p4" "clone"
-                       (cons depot-path (magit-p4-clone-arguments))))
+                       (cons depot-path (magit-p4-clone-arguments))
+                       target-dir))
 
 
 ;;;###autoload
