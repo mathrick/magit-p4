@@ -33,11 +33,7 @@
 (require 'p4)
 
 (eval-when-compile (require 'cl-lib))
-(eval-when-compile (require 'find-lisp))
 (eval-when-compile (require 'subr-x))
-
-(declare-function find-lisp-find-files-internal "find-lisp"
-                  (directory file-predicate directory-predicate))
 
 ;;; Options
 
@@ -255,7 +251,7 @@ P4EDITOR and use custom process filter `magit-p4-process-filter'."
 (transient-insert-suffix 'magit-dispatch '(0 0 0)
   '("4" "Git P4" magit-p4-popup))
 
-(bind-key (kbd "4") #'magit-p4-popup magit-mode-map)
+(define-key magit-mode-map (kbd "4") #'magit-p4-popup)
 
 (defun magit-p4/insert-job (&optional job)
   "Insert JOB reference in a buffer.
