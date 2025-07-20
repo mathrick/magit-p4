@@ -101,6 +101,12 @@ as a part of `magit', as it won't be detected by
   :for-command test
   (setf test-results-file file))
 
+(eldev-defoption set-test-suite-name (name)
+  :options (--test-suite)
+  :value name
+  :for-command test
+  (setf buttercup-junit-master-suite name))
+
 ;; Use buttercup-junit to generate XML results file
 (add-hook 'eldev-test-buttercup-hook (lambda (_)
                                        (require 'buttercup-junit)
