@@ -9,18 +9,8 @@ permissions:
   contents: read
 
 jobs:
-  # https://github.com/marketplace/actions/publish-test-results#support-fork-repositories-and-dependabot-branches
-  event_file:
-    name: "Save event file for test report generation"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Upload
-        uses: actions/upload-artifact@v4
-        with:
-          name: event
-          path: ${{ github.event_path }}
-
-  build:
+  test:
+    name: Emacs ${{ matrix.emacs_version }} @ ${{ matrix.os }} - ${{ matrix.variant.name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -41,7 +31,6 @@ jobs:
           - opt: "--old-deps"
             name: "backwards compatibility mode"
             id: "old"
-    name: Emacs ${{ matrix.emacs_version }} @ ${{ matrix.os }} - ${{ matrix.variant.name }}
 
     steps:
     - name: Set up Emacs
