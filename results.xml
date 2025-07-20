@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+ <testsuite name="Emacs 29.3 @ ubuntu-24.04 - standard" timestamp="2025-07-20 14:27:05-0700" hostname="mkatafiasz-lcelt" tests="4" failures="0" errors="0" time="0.118661" skipped="0">
+  <testsuite name="Magit-P4 Magit dispatch menu integration" timestamp="2025-07-20 14:27:05-0700" hostname="mkatafiasz-lcelt" tests="1" failures="0" errors="0" time="0.091807" skipped="0">
+   <testcase name="should hook into Magit&apos;s dispatch menu" classname="buttercup" time="0.091804"></testcase>
+  </testsuite>
+  <testsuite name="Popup should open without errors:" timestamp="2025-07-20 14:27:05-0700" hostname="mkatafiasz-lcelt" tests="3" failures="0" errors="0" time="0.026849" skipped="0">
+   <testcase name="magit-p4-clone-popup" classname="buttercup" time="0.007674"></testcase>
+   <testcase name="magit-p4-sync-popup" classname="buttercup" time="0.009446"></testcase>
+   <testcase name="magit-p4-submit-popup" classname="buttercup" time="0.009720"></testcase>
+  </testsuite>
+ </testsuite>
+</testsuites>

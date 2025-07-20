@@ -1,23 +1,31 @@
 # This needs to be a separate workflow for PRs from forked repos to be reported properly,
-# see https://github.com/marketplace/actions/test-reporter#recommended-setup-for-public-repositories
+# see https://github.com/marketplace/actions/publish-test-results#support-fork-repositories-and-dependabot-branches
 name: Generate test reports
 on:
   workflow_run:
     workflows: ["Run tests"]
     types:
       - completed
-permissions:
-  contents: read
-  actions: read
-  checks: write
+permissions: {}
 
 jobs:
   report:
     runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure'
+
+    permissions:
+      checks: write
+      # required by download step to access artifacts API
+      actions: read
+
     steps:
-    - uses: dorny/test-reporter@v2
-      with:
-        artifact: /test-\w+-[0-9.]+@\w+-[\w.]+/
-        name: Unit tests
-        path: 'results.xml'
-        reporter: java-junit
+      - name: Get saved test results
+        uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
+        with:
+           run_id: ${{ github.event.workflow_run.id }}
+           path: test-results
+
+      - name: Generate summary
+        uses: gmazzo/publish-report-annotations@v1
+        with:
+          reports: "test-results/**/results.xml"

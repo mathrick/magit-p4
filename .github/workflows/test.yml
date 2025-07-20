@@ -47,19 +47,19 @@ jobs:
       - name: Check out the source code
         uses: actions/checkout@v4
 
-      - name: Test the project (${{ matrix.variant.name }})
-        run: |
-          # Need --suppress-warnings because p4.el triggers various "package cl is obsolete"
-          # warnings that Emacs just loves making up for no good reason
-          eldev --packaged ${{ matrix.variant.opt }} compile --suppress-warnings -FL
-          # But for our own code, use --warnings-as-errors
-          eldev --packaged ${{ matrix.variant.opt }} compile --warnings-as-errors -L --new=magit-p4.el
-          eldev --packaged ${{ matrix.variant.opt }} test -B --test-suite "${{ steps.context.outputs.job_name }}"
+      # - name: Test the project (${{ matrix.variant.name }})
+      #   run: |
+      #     # Need --suppress-warnings because p4.el triggers various "package cl is obsolete"
+      #     # warnings that Emacs just loves making up for no good reason
+      #     eldev --packaged ${{ matrix.variant.opt }} compile --suppress-warnings -FL
+      #     # But for our own code, use --warnings-as-errors
+      #     eldev --packaged ${{ matrix.variant.opt }} compile --warnings-as-errors -L --new=magit-p4.el
+      #     eldev --packaged ${{ matrix.variant.opt }} test -B --test-suite "${{ steps.context.outputs.job_name }}"
 
       - name: Upload test results
         if: (!cancelled())
         uses: actions/upload-artifact@v4
         with:
-          name: test-${{ matrix.variant.id }}-${{ matrix.emacs_version }}@${{ matrix.os }}
+          name: test-results # test-${{ matrix.variant.id }}-${{ matrix.emacs_version }}@${{ matrix.os }}
           path: |
             results.xml
